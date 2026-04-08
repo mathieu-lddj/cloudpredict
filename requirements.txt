@@ -1,0 +1,20 @@
+# requirements.txt
+# API
+flask==3.1.0
+gunicorn==23.0.0
+# ML
+scikit-learn==1.6.1
+pandas==2.2.3
+numpy==2.2.3
+joblib==1.4.2
+# Base de donnees
+redis==5.2.1
+psycopg2-binary==2.9.10
+# Monitoring
+prometheus-client==0.21.1
+# MLOps
+mlflow==2.19.0
+evidently==0.4.45
+# Tests
+pytest==8.3.4
+pytest-cov==6.0.0
