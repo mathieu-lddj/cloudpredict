@@ -1,0 +1,86 @@
+version: "3.8"
+services:
+  # ============================================
+  # Service API - Application Flask
+  # ============================================
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    container_name: cloudpredict-api
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+      - MODEL_PATH=/app/ml/models/model.joblib
+      - DATABASE_URL=postgresql://cloudpredict:cloudpredict123@postgres:5432/cloudpredict
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - cloudpredict-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # ============================================
+  # Service PostgreSQL - Base de donnees
+  # ============================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: cloudpredict-postgres
+    environment:
+      POSTGRES_USER: cloudpredict
+      POSTGRES_PASSWORD: cloudpredict123
+      POSTGRES_DB: cloudpredict
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    networks:
+      - cloudpredict-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cloudpredict"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # Service Redis - Cache
+  # ============================================
+  redis:
+    image: redis:7-alpine
+    container_name: cloudpredict-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+    networks:
+      - cloudpredict-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+# ============================================
+# Volumes persistants
+# ============================================
+volumes:
+  postgres_data:
+  redis_data:
+
+# ============================================
+# Reseaux
+# ============================================
+networks:
+  cloudpredict-network:
