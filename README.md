@@ -31,11 +31,22 @@ minikube addons enable metrics-server
 
 ### 4. Construction de l'image dans Minikube
 Il est crucial de construire l'image Docker *directement* dans l'environnement Minikube pour que le cluster puisse y accéder sans registre externe :
+
+#### Linux (Bash)
 ```bash
 # Connecter le terminal au démon Docker de Minikube
 eval $(minikube docker-env)
 
 # Construire l'image (le modèle généré à l'étape 2 sera inclus)
+docker build -t cloudpredict-api:latest -f docker/Dockerfile.api .
+```
+
+#### Windows (Powershell)
+```powershell
+# Connecter le terminal au démon Docker de Minikube
+& minikube -p minikube docker-env --shell powershell | Invoke-Expression
+
+# Construire l'image
 docker build -t cloudpredict-api:latest -f docker/Dockerfile.api .
 ```
 
@@ -58,28 +69,54 @@ kubectl apply -f k8s/api/hpa.yaml
 ```
 
 ### 6. Accès à l'application
-Ajoutez l'entrée suivante dans votre fichier `/etc/hosts` (ou `C:\Windows\System32\drivers\etc\hosts`) pour utiliser le nom de domaine local :
-```bash
-# Récupérer l'IP de Minikube
-minikube ip
+Ajoutez l'entrée suivante dans votre fichier hosts pour utiliser le nom de domaine local :
 
-# Ajouter la ligne suivante dans le fichier hosts
-# <IP_MINIKUBE> cloudpredict.local
+* **Fichier Linux/macOS :** `/etc/hosts`
+* **Fichier Windows :** `C:\Windows\System32\drivers\etc\hosts`
+
+**Commande pour récupérer l'IP :**
+```bash
+minikube ip
 ```
+**Ligne à ajouter :**
+`<IP_MINIKUBE> cloudpredict.local`
+
+---
 
 ## 🧪 Tests et Validation
-Une fois le déploiement terminé, vous pouvez tester les endpoints via l'Ingress :
+Une fois le déploiement terminé, testez les points d'entrée :
 
-* **Health Check :**
-    `curl http://cloudpredict.local/health`
-* **Prédiction :**
+**Health Check :**
+* **Bash/Linux :** `curl http://cloudpredict.local/health`
+* **PowerShell :** `Invoke-RestMethod -Uri http://cloudpredict.local/health`
+
+**Prédiction :**
+* **Bash/Linux :**
     ```bash
     curl -X POST http://cloudpredict.local/predict \
          -H "Content-Type: application/json" \
          -d '{"features": {"surface": 75, "pieces": 3, "etage": 2, "parking": 1, "quartier": "centre-ville", "annee_construction": 2005}}'
+    ```
+* **PowerShell :**
+    ```powershell
+    $body = @{
+        features = @{
+            surface = 75
+            pieces = 3
+            etage = 2
+            parking = 1
+            quartier = "centre-ville"
+            annee_construction = 2005
+        }
+    } | ConvertTo-Json
+    Invoke-RestMethod -Method Post -Uri http://cloudpredict.local/predict -Body $body -ContentType "application/json"
     ```
 
 ## 🛠️ Commandes Utiles
 * **Surveiller les pods :** `kubectl get pods -n cloudpredict`
 * **Logs de l'API :** `kubectl logs -l component=api -n cloudpredict`
 * **Statut de l'autoscaling :** `kubectl get hpa -n cloudpredict`
+
+
+
+
