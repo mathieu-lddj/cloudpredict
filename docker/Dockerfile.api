@@ -22,7 +22,7 @@ ENV MODEL_PATH=/app/ml/models/model.joblib
 ENV FLASK_APP=app.main
 ENV FLASK_ENV=production
 # Creer un utilisateur non-root
-RUN groupadd -r cloudpredict && useradd -r -g cloudpredict cloudpredict
+RUN groupadd -r cloudpredict && useradd -r -m -g cloudpredict cloudpredict
 WORKDIR /app
 # Copier les dependances installees depuis le builder
 COPY --from=builder /install /usr/local
